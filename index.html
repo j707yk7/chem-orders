@@ -78,6 +78,38 @@
   .arow{display:flex;gap:4px;flex-wrap:wrap}
   .abtn{padding:3px 8px;border-radius:5px;font-family:inherit;font-size:11px;font-weight:500;border:1px solid var(--g200);background:white;cursor:pointer;color:var(--g600);transition:all .15s;white-space:nowrap}
   .abtn:hover{background:var(--g100)}
+  /* MOBILE */
+  @media(max-width:768px){
+    body{flex-direction:column}
+    .sidebar{width:100%;min-height:auto;flex-direction:row;flex-wrap:wrap;padding-bottom:0}
+    .logo{padding:12px 14px;border-bottom:none;border-right:1px solid rgba(255,255,255,0.12)}
+    .new-btn{margin:10px 10px 10px 0;padding:7px 12px;font-size:12px}
+    .admin-box{margin:10px 10px 10px 0;padding:7px 10px}
+    .sb-sec,.sb-item,.vendorList{display:none}
+    .sb-foot{margin-top:0;padding:10px;border-top:none;border-left:1px solid rgba(255,255,255,0.1)}
+    .main{overflow:visible}
+    .ph{padding:12px 14px}
+    .ph h1{font-size:15px}
+    .vtog{gap:5px}
+    .vbtn{padding:4px 10px;font-size:11px}
+    .tabs{padding:0 12px}
+    .tab{padding:9px 10px;font-size:12px}
+    .content{padding:12px 14px}
+    .topbar{gap:6px}
+    .si{width:100%}
+    .tw{overflow-x:auto}
+    table{table-layout:auto;min-width:500px}
+    th,td{padding:8px 10px;font-size:11px}
+    .hdr-row{flex-wrap:wrap;gap:6px}
+    .hdr-row .si{width:140px}
+    /* Mobile card view for requests */
+    .mobile-card{display:block;background:white;border:1px solid var(--g200);border-radius:8px;padding:12px;margin-bottom:10px}
+    .mobile-card-hide{display:none}
+  }
+  @media(min-width:769px){
+    .mobile-card{display:none}
+    .mobile-card-hide{display:table-row}
+  }
   .abtn.danger:hover{background:#fef2f2;color:#dc2626;border-color:#fca5a5}
   .status-sel{padding:3px 6px;border:1px solid var(--g200);border-radius:5px;font-family:inherit;font-size:11px;background:white;color:var(--g800);cursor:pointer;outline:none}
   .status-sel:focus{border-color:var(--uh-mid)}
@@ -202,6 +234,8 @@
         <tbody id="tbody"></tbody>
       </table>
     </div>
+
+    <div id="mobileCards" style="display:block"></div>
 
     <div id="histView" style="display:none">
       <div class="hdr-row">
@@ -406,7 +440,7 @@ function render() {
     document.getElementById('tableWrap').style.display = 'block';
     tbody.innerHTML = filtered.map(o => `
       <tr>
-        <td title="${o.name}"><div class="iname">${o.urgent==='yes'?'🚨 ':''}${o.name}</div>${o.cas?`<div class="isub">CAS ${o.cas}</div>`:''}</td>
+        <td title="${o.name}"><div class="iname">${o.urgent==='yes'?'🚨 ':''}${o.name}</div>${o.cas?`<div class="isub">${o.cas}</div>`:''}</td>
         <td><div class="rc"><div class="av">${ini(o.requestor)}</div>${o.requestor||'—'}</div></td>
         <td>${o.vendor?`<span class="vtag">${o.vendor}</span>`:'<span style="color:var(--g400)">—</span>'}</td>
         <td style="color:var(--g400);font-size:11px">${o.date}</td>
@@ -427,6 +461,33 @@ function render() {
           ${isAdmin?`<button class="abtn danger" onclick="del(${o.id})">Del</button>`:''}
         </div></td>
       </tr>`).join('');
+
+    const mc = document.getElementById('mobileCards');
+    if(mc) mc.innerHTML = filtered.map(o=>`
+      <div class="mobile-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div style="flex:1;margin-right:8px"><div class="iname" style="font-size:13px">${o.urgent==='yes'?'🚨 ':''}${o.name}</div>${o.cas?`<div class="isub">${o.cas}</div>`:''}</div>
+          ${badge(o.status)}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:12px;color:var(--g600);margin-bottom:8px">
+          <div>👤 ${o.requestor||'—'}</div>
+          <div>📅 ${o.date}</div>
+          <div>🏷 ${o.vendor||'—'}</div>
+          <div>📦 ${o.qty||'—'}${o.price?' · $'+o.price:''}</div>
+        </div>
+        ${o.comment?`<div style="font-size:11px;color:var(--g400);margin-bottom:8px">${o.comment}</div>`:''}
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          ${o.link?`<a class="lbtn" href="${o.link}" target="_blank" style="font-size:12px">View ↗</a>`:''}
+          ${isAdmin?`<select class="status-sel" onchange="changeStatus(${o.id},this.value)">
+            <option value="new"${o.status==='new'?' selected':''}>New</option>
+            <option value="requested"${o.status==='requested'?' selected':''}>Requested</option>
+            <option value="ordered"${o.status==='ordered'?' selected':''}>Ordered</option>
+            <option value="received"${o.status==='received'?' selected':''}>Received</option>
+          </select>`:''}
+          ${isAdmin?`<button class="abtn" onclick="openModal(${o.id})">Edit</button>`:''}
+          ${isAdmin?`<button class="abtn danger" onclick="del(${o.id})">Del</button>`:''}
+        </div>
+      </div>`).join('');
   }
 }
 

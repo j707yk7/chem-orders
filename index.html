@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rimer Group Chemical Orders</title>
+<title>Rimer Group Lab Orders</title>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -117,7 +117,7 @@ input:checked+.sl::before{transform:translateX(13px)}
 <body>
 
 <nav class="nav">
-  <span class="nav-logo">Rimer Group Chemical Orders</span>
+  <span class="nav-logo">Rimer Group Orders</span>
   <span class="nav-uh">UH</span>
   <div class="nav-admin">
     <label class="sw">
@@ -437,7 +437,7 @@ function updateCounts() {
   const mem=document.getElementById('sbMembers');
   if(mem){
     const names=[...new Set(orders.map(o=>o.requestor).filter(Boolean))].sort();
-    mem.innerHTML=names.map(n=>`<div class="sb-item" onclick="document.getElementById('fReq').value='${n}';render()">${n} <span>${orders.filter(o=>o.requestor===n).length}</span></div>`).join('');
+    mem.innerHTML=names.map(n=>`<div class="sb-item" onclick="document.getElementById('fReq').value='${n}';currentTab='';document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelector('.tab').classList.add('active');render()">${n} <span>${orders.filter(o=>o.requestor===n).length}</span></div>`).join('');
   }
 }
 
@@ -449,6 +449,9 @@ function updateMemberFilter() {
 
 function setTab(status, el) {
   currentTab = status;
+  if (status === '') {
+    document.getElementById('fReq').value = '';
+  }
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.sb-item[onclick^="setTab"]').forEach(t=>t.classList.remove('active'));
   if(el) el.classList.add('active');

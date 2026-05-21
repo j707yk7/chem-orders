@@ -135,8 +135,8 @@
   .bc{background:white;color:var(--g600)}.bc:hover{background:var(--g100)}
   .bs{background:var(--uh);color:white;border-color:var(--uh)}.bs:hover{background:var(--uh-dark)}
   /* PASSWORD MODAL */
-  .pm{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center}
-  .pm.open{display:flex}
+  .pm{display:none !important;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center}
+  .pm.open{display:flex !important}
   .pmd{background:white;border-radius:12px;width:320px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.2);text-align:center}
   .pmd h3{font-size:15px;font-weight:600;margin-bottom:6px}
   .pmd p{font-size:12px;color:var(--g600);margin-bottom:16px}
@@ -709,6 +709,7 @@ function sendUrgentEmail(name, chemical, link, deliveryDate, comment) {
 }
 
 document.getElementById('si-all').classList.add('active');
+document.getElementById('pwModal').classList.remove('open');
 render();
 </script>
 </body>

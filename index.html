@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rimer Group — Lab Orders</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+  :root{
+    --uh:#C8102E;--uh-dark:#8B0000;--uh-light:#fdf0f2;--uh-mid:#e8394f;
+    --g50:#f9fafb;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g600:#4b5563;--g800:#1f2937;
+    --sidebar:#7a0a1c;--sidebar-h:#C8102E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--g800);display:flex;min-height:100vh}
+  .sidebar{width:210px;background:var(--sidebar);color:white;display:flex;flex-direction:column;min-height:100vh;flex-shrink:0}
+  .logo{padding:18px 16px 14px;font-size:14px;font-weight:600;border-bottom:1px solid rgba(255,255,255,0.12);display:flex;align-items:center;gap:8px}
+  .new-btn{margin:14px 12px 10px;background:white;color:var(--sidebar);border:none;border-radius:6px;padding:8px 12px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px}
+  .new-btn:hover{opacity:.9}
+  .admin-box{margin:0 12px 10px;padding:9px 11px;background:rgba(255,255,255,0.08);border-radius:7px;border:1px solid rgba(255,255,255,0.12)}
+  .admin-lbl{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:6px}
+  .toggle-row{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,0.85)}
+  .sw{position:relative;width:30px;height:17px;flex-shrink:0}
+  .sw input{opacity:0;width:0;height:0;position:absolute}
+  .sl{position:absolute;inset:0;background:rgba(255,255,255,.2);border-radius:99px;cursor:pointer;transition:.2s}
+  .sl::before{content:'';position:absolute;width:13px;height:13px;left:2px;top:2px;background:white;border-radius:50%;transition:.2s}
+  input:checked+.sl{background:#fbbf24}
+  input:checked+.sl::before{transform:translateX(13px)}
+  .sb-sec{padding:7px 12px 3px;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4)}
+  .sb-item{padding:7px 12px;font-size:12px;color:rgba(255,255,255,.75);cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:background .1s}
+  .sb-item:hover,.sb-item.active{background:var(--sidebar-h);color:white}
+  .sb-item span{font-size:11px;background:rgba(255,255,255,.15);padding:1px 6px;border-radius:99px}
+  .sb-foot{margin-top:auto;padding:12px;border-top:1px solid rgba(255,255,255,.1);display:flex;gap:7px}
+  .sb-foot button{flex:1;background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.7);padding:6px 0;border-radius:5px;font-family:inherit;font-size:11px;cursor:pointer}
+  .sb-foot button:hover{background:rgba(255,255,255,.2);color:white}
+  .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  .ph{background:var(--uh-light);padding:16px 24px 14px;border-bottom:1px solid #f0b8c0;display:flex;align-items:center;gap:10px}
+  .ph h1{font-size:19px;font-weight:600;color:var(--uh-dark)}
+  .uh-tag{font-size:11px;font-weight:600;background:var(--uh);color:white;padding:2px 8px;border-radius:4px}
+  .tabs{background:white;border-bottom:1px solid var(--g200);padding:0 24px;display:flex;overflow-x:auto}
+  .tab{padding:11px 16px;font-size:13px;font-weight:500;color:var(--g600);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:6px;transition:color .15s}
+  .tab:hover{color:var(--uh)}
+  .tab.active{color:var(--uh);border-bottom-color:var(--uh)}
+  .tc{background:var(--g200);color:var(--g600);font-size:11px;font-weight:600;padding:1px 6px;border-radius:99px}
+  .tab.active .tc{background:var(--uh);color:white}
+  .content{padding:20px 24px;flex:1;overflow-y:auto}
+  .topbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .si{padding:6px 10px;border:1px solid var(--g200);border-radius:6px;font-family:inherit;font-size:12px;color:var(--g800);background:white;outline:none;width:190px}
+  .si:focus{border-color:var(--uh-mid)}
+  .fs{padding:6px 9px;border:1px solid var(--g200);border-radius:6px;font-family:inherit;font-size:12px;color:var(--g600);background:white;cursor:pointer;outline:none}
+  .vtog{display:flex;gap:7px;margin-left:auto}
+  .vbtn{padding:5px 12px;border-radius:5px;font-family:inherit;font-size:12px;font-weight:500;border:1px solid var(--g200);background:white;cursor:pointer;color:var(--g600);transition:all .15s}
+  .vbtn.active{background:var(--uh);color:white;border-color:var(--uh)}
+  .empty{background:var(--g100);border-radius:10px;padding:50px 20px;text-align:center;display:none}
+  .empty.show{display:block}
+  .empty p{color:var(--g600);font-size:14px;margin-bottom:5px;font-weight:500}
+  .empty small{color:var(--g400);font-size:12px}
+  .ebtn{margin-top:16px;display:inline-flex;align-items:center;gap:5px;background:none;border:1px solid var(--uh);color:var(--uh);padding:7px 16px;border-radius:6px;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer}
+  .ebtn:hover{background:var(--uh-light)}
+  .tw{background:white;border-radius:10px;border:1px solid var(--g200);overflow:hidden}
+  table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+  th{padding:9px 12px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--g400);border-bottom:1px solid var(--g200);background:var(--g50)}
+  td{padding:10px 12px;border-bottom:1px solid var(--g100);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:var(--g50)}
+  .iname{font-weight:500;color:var(--g800)}
+  .isub{font-size:10px;color:var(--g400);margin-top:2px;font-family:'DM Mono',monospace}
+  .badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;white-space:nowrap}
+  .badge::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0}
+  .b-new{background:#e0f2fe;color:#0369a1}.b-new::before{background:#0369a1}
+  .b-requested{background:#fef3c7;color:#b45309}.b-requested::before{background:#b45309}
+  .b-ordered{background:#ede9fe;color:#6d28d9}.b-ordered::before{background:#6d28d9}
+  .b-received{background:#d1fae5;color:#065f46}.b-received::before{background:#065f46}
+  .vtag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:500;background:var(--g100);color:var(--g600);border:1px solid var(--g200)}
+  .lbtn{color:#1d4ed8;text-decoration:none;font-size:11px}
+  .lbtn:hover{text-decoration:underline}
+  .arow{display:flex;gap:4px;flex-wrap:wrap}
+  .abtn{padding:3px 8px;border-radius:5px;font-family:inherit;font-size:11px;font-weight:500;border:1px solid var(--g200);background:white;cursor:pointer;color:var(--g600);transition:all .15s;white-space:nowrap}
+  .abtn:hover{background:var(--g100)}
+  .abtn.danger:hover{background:#fef2f2;color:#dc2626;border-color:#fca5a5}
+  .status-sel{padding:3px 6px;border:1px solid var(--g200);border-radius:5px;font-family:inherit;font-size:11px;background:white;color:var(--g800);cursor:pointer;outline:none}
+  .status-sel:focus{border-color:var(--uh-mid)}
+  .rc{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--g600)}
+  .av{width:20px;height:20px;border-radius:50%;background:var(--uh-light);color:var(--uh);font-size:8px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+  /* MODAL */
+  .mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+  .mo.open{display:flex}
+  .md{background:white;border-radius:12px;width:500px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+  .mh{padding:16px 20px 13px;border-bottom:1px solid var(--g200);display:flex;align-items:center;justify-content:space-between}
+  .mh h2{font-size:15px;font-weight:600}
+  .mc-btn{background:none;border:none;color:var(--g400);font-size:19px;cursor:pointer;padding:2px 5px;border-radius:4px}
+  .mc-btn:hover{background:var(--g100)}
+  .mb{padding:18px 20px}
+  .fg{margin-bottom:13px}
+  .fg label{display:block;font-size:11px;font-weight:600;color:var(--g600);margin-bottom:4px;letter-spacing:.03em}
+  .fg input,.fg select,.fg textarea{width:100%;padding:7px 10px;border:1px solid var(--g200);border-radius:6px;font-family:inherit;font-size:13px;color:var(--g800);background:white;outline:none;transition:border-color .15s}
+  .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--uh-mid);box-shadow:0 0 0 3px rgba(200,16,46,.1)}
+  .fg textarea{resize:vertical;min-height:55px}
+  .fr{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .mf{padding:12px 20px;border-top:1px solid var(--g100);display:flex;justify-content:flex-end;gap:8px}
+  .btn{padding:7px 16px;border-radius:6px;font-family:inherit;font-size:13px;font-weight:500;border:1px solid var(--g200);cursor:pointer;transition:all .15s}
+  .bc{background:white;color:var(--g600)}.bc:hover{background:var(--g100)}
+  .bs{background:var(--uh);color:white;border-color:var(--uh)}.bs:hover{background:var(--uh-dark)}
+  /* PASSWORD MODAL */
+  .pm{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center}
+  .pm.open{display:flex}
+  .pmd{background:white;border-radius:12px;width:320px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.2);text-align:center}
+  .pmd h3{font-size:15px;font-weight:600;margin-bottom:6px}
+  .pmd p{font-size:12px;color:var(--g600);margin-bottom:16px}
+  .pmd input{width:100%;padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-family:inherit;font-size:14px;text-align:center;letter-spacing:.2em;outline:none;margin-bottom:12px}
+  .pmd input:focus{border-color:var(--uh-mid);box-shadow:0 0 0 3px rgba(200,16,46,.1)}
+  .perr{font-size:12px;color:var(--uh);margin-bottom:10px;min-height:16px}
+  .pmd-btns{display:flex;gap:8px}
+  .pmd-btns button{flex:1;padding:8px;border-radius:6px;font-family:inherit;font-size:13px;font-weight:500;border:1px solid var(--g200);cursor:pointer}
+  .toast{position:fixed;bottom:20px;right:20px;background:var(--g800);color:white;padding:9px 14px;border-radius:8px;font-size:12px;font-weight:500;z-index:999;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none}
+  .toast.show{opacity:1;transform:translateY(0)}
+  .hdr-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .hdr-row h3{font-size:14px;font-weight:600;color:var(--g800)}
+  .hdr-row span{font-size:12px;color:var(--g400)}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="logo">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+    Lab Orders
+  </div>
+  <button class="new-btn" onclick="openModal()">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    New Request
+  </button>
+  <div class="admin-box">
+    <div class="admin-lbl">Mode</div>
+    <label class="toggle-row">
+      <div class="sw"><input type="checkbox" id="adminToggle" onchange="onAdminToggle()"><span class="sl"></span></div>
+      <span id="adminLbl">Member</span>
+    </label>
+  </div>
+  <div class="sb-sec">Status</div>
+  <div class="sb-item active" onclick="setTab('',this)" id="si-all">All <span id="cnt-all">0</span></div>
+  <div class="sb-item" onclick="setTab('new',this)" id="si-new">New <span id="cnt-new">0</span></div>
+  <div class="sb-item" onclick="setTab('requested',this)" id="si-req">Requested <span id="cnt-requested">0</span></div>
+  <div class="sb-item" onclick="setTab('ordered',this)" id="si-ord">Ordered <span id="cnt-ordered">0</span></div>
+  <div class="sb-item" onclick="setTab('received',this)" id="si-rec">Received <span id="cnt-received">0</span></div>
+  <div class="sb-sec" style="margin-top:6px">Vendor</div>
+  <div id="vendorList"></div>
+  <div class="sb-foot">
+    <button onclick="exportCSV()">⬇ Export</button>
+    <button onclick="document.getElementById('impF').click()">⬆ Import</button>
+    <input type="file" id="impF" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+</div>
+
+<div class="main">
+  <div class="ph">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C8102E" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    <h1>Rimer Group Orders</h1>
+    <span class="uh-tag">UH</span>
+    <div class="vtog">
+      <button class="vbtn active" onclick="switchView('requests',this)">Requests</button>
+      <button class="vbtn" onclick="switchView('history',this)">History</button>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabBar">
+    <div class="tab active" onclick="setTab('',this)">All <span class="tc" id="tab-all">0</span></div>
+    <div class="tab" onclick="setTab('new',this)">New <span class="tc" id="tab-new">0</span></div>
+    <div class="tab" onclick="setTab('requested',this)">Requested <span class="tc" id="tab-requested">0</span></div>
+    <div class="tab" onclick="setTab('ordered',this)">Ordered <span class="tc" id="tab-ordered">0</span></div>
+    <div class="tab" onclick="setTab('received',this)">Received <span class="tc" id="tab-received">0</span></div>
+  </div>
+
+  <div class="content">
+    <div class="topbar" id="topBar">
+      <input class="si" type="text" id="srch" placeholder="Search chemical or name..." oninput="render()">
+      <select class="fs" id="fReq" onchange="render()"><option value="">All members</option></select>
+      <select class="fs" id="fVen" onchange="render()"><option value="">All vendors</option></select>
+    </div>
+
+    <div class="empty" id="emptyState">
+      <p>No requests yet</p>
+      <small>Click New Request to submit an order</small><br>
+      <button class="ebtn" onclick="openModal()">+ New request</button>
+    </div>
+
+    <div class="tw" id="tableWrap" style="display:none">
+      <table>
+        <thead><tr>
+          <th style="width:17%">Chemical</th>
+          <th style="width:10%">Name</th>
+          <th style="width:11%">Vendor</th>
+          <th style="width:8%">Date</th>
+          <th style="width:7%">Qty</th>
+          <th style="width:7%">Price</th>
+          <th style="width:11%">Status</th>
+          <th style="width:13%">Comment</th>
+          <th style="width:7%">Link</th>
+          <th style="width:9%">Actions</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <div id="histView" style="display:none">
+      <div class="hdr-row">
+        <h3>Order History</h3>
+        <span id="histCount"></span>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--g600);margin-left:12px;cursor:pointer">
+          <input type="checkbox" id="histShowAll" onchange="renderHistory()"> Show all
+        </label>
+        <input class="si" style="width:180px;margin-left:auto" type="text" id="histSrch" placeholder="Search history..." oninput="renderHistory()">
+        <select class="fs" id="histReq" onchange="renderHistory()"><option value="">All members</option></select>
+      </div>
+      <div class="tw">
+        <table>
+          <thead><tr>
+            <th style="width:22%">Chemical</th>
+            <th style="width:11%">Name</th>
+            <th style="width:12%">Vendor</th>
+            <th style="width:9%">Date</th>
+            <th style="width:8%">Qty</th>
+            <th style="width:8%">Price</th>
+            <th style="width:16%">Comment</th>
+            <th style="width:8%">Link</th>
+            <th style="width:6%">Act</th>
+          </tr></thead>
+          <tbody id="histBody"></tbody>
+        </table>
+      </div>
+      <div id="histEmpty" style="text-align:center;padding:40px;color:var(--g400);font-size:13px;display:none">No history yet.</div>
+    </div>
+  </div>
+</div>
+
+<!-- NEW REQUEST MODAL -->
+<div class="mo" id="modal">
+  <div class="md">
+    <div class="mh"><h2 id="modalTitle">New Order Request</h2><button class="mc-btn" onclick="closeModal()">✕</button></div>
+    <div class="mb">
+      <div class="fg"><label>Chemical Name *</label><input type="text" id="fName" placeholder="e.g. Chromium(III) nitrate"></div>
+      <div class="fr">
+        <div class="fg">
+          <label>Your Name *</label>
+          <select id="fReqName">
+            <option value="">Select...</option>
+            <option>Amir</option><option>Bartu</option><option>Chenfeng</option>
+            <option>Debasmita</option><option>Edgar</option><option>Fiji</option>
+            <option>Hanchang</option><option>Isaac</option><option>Judith</option><option>Mobin</option>
+            <option>Sambita</option><option>Sumit</option><option>Sungjoon</option>
+            <option>Tanvir</option><option>YoonGyeong</option><option>Other</option>
+          </select>
+        </div>
+        <div class="fg"><label>Date</label><input type="date" id="fDate"></div>
+      </div>
+      <div class="fr">
+        <div class="fg">
+          <label>Vendor</label>
+          <select id="fVendor">
+            <option value="">Select vendor...</option>
+            <option>Sigma-Aldrich</option><option>Fisher Scientific</option>
+            <option>VWR</option><option>Alfa Aesar</option><option>TCI Chemicals</option>
+            <option>Acros Organics</option><option>Strem Chemicals</option>
+            <option>Combi-Blocks</option><option>Other</option>
+          </select>
+        </div>
+      <div class="fr">
+        <div class="fg"><label>Product Number</label><input type="text" id="fCAS" placeholder="e.g. 239259-500G"></div>
+        <div class="fg"><label>Quantity</label><input type="text" id="fQty" placeholder="e.g. 1 x 500g"></div>
+      </div>
+      <div class="fg"><label>Unit Price ($)</label><input type="text" id="fPrice" placeholder="e.g. 83.50"></div>
+      <div class="fg" id="statusFg" style="display:none">
+        <label>Status <span style="font-size:10px;color:var(--g400);font-weight:400">(Admin only)</span></label>
+        <select id="fStatus">
+          <option value="new">New</option><option value="requested">Requested</option>
+          <option value="ordered">Ordered</option><option value="received">Received</option>
+        </select>
+      </div>
+      <div class="fg"><label>Link</label><input type="text" id="fLink" placeholder="https://..."></div>
+      <div class="fr">
+        <div class="fg">
+          <label>Urgent?</label>
+          <select id="fUrgent" onchange="toggleUrgent()">
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </div>
+        <div class="fg" id="deliveryFg" style="display:none">
+          <label>Needed by</label>
+          <input type="date" id="fDelivery">
+        </div>
+      </div>
+      <div class="fg"><label>Comment / CAS Number</label><textarea id="fComment" placeholder="e.g. CAS: 7789-02-8, need 500g"></textarea></div>
+    </div>
+    <div class="mf">
+      <button class="btn bc" onclick="closeModal()">Cancel</button>
+      <button class="btn bs" onclick="saveOrder()">Save Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASSWORD MODAL -->
+<div class="pm" id="pwModal">
+  <div class="pmd">
+    <h3>Admin Access</h3>
+    <p>Enter password to enable admin mode</p>
+    <input type="password" id="pwInput" placeholder="••••" maxlength="10" oninput="document.getElementById('pwErr').textContent=''">
+    <div class="perr" id="pwErr"></div>
+    <div class="pmd-btns">
+      <button onclick="cancelAdmin()" style="background:var(--g100);color:var(--g600)">Cancel</button>
+      <button onclick="checkPw()" style="background:var(--uh);color:white;border-color:var(--uh)">Enter</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const HIST = [{"id": 1, "name": "Sigma #366773", "requestor": "Debasmita", "date": "2022-10-07", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/366773", "comment": "", "qty": "1(25 gm)", "price": "231"}, {"id": 2, "name": "Sigma #79267", "requestor": "Debasmita", "date": "2022-10-07", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/79267", "comment": "", "qty": "1(100 ml)", "price": "38"}, {"id": 3, "name": "If 5ml is available to get shipped first you can order that, I am still waiting ", "requestor": "Shilpa", "date": "2022-10-07", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sial/39760", "comment": "", "qty": "2(10ml)", "price": "127"}, {"id": 4, "name": "Alfa A16037", "requestor": "Fiji", "date": "2022-10-07", "status": "received", "vendor": "Alfa Aesar", "cas": "", "link": "https://www.alfa.com/en/catalog/A16037/", "comment": "", "qty": "1 (500 g)", "price": "29.4"}, {"id": 5, "name": "Sigma #438278", "requestor": "Sambita", "date": "2022-10-07", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/438278", "comment": "", "qty": "1 (250 g)", "price": "184"}, {"id": 6, "name": "Chemical", "requestor": "Amir", "date": "2022-11-11", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "2.0", "price": ""}, {"id": 7, "name": "Chemical", "requestor": "Amir", "date": "2022-11-11", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "1.0", "price": ""}, {"id": 8, "name": "Chemical", "requestor": "Amir", "date": "2022-11-11", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "1.0", "price": ""}, {"id": 9, "name": "Sigma #202584", "requestor": "Debasmita", "date": "2022-11-11", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/202584", "comment": "", "qty": "1.0", "price": "83.9"}, {"id": 10, "name": "SKU: 1090571000", "requestor": "Debasmita", "date": "2022-11-11", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/mm/109057", "comment": "", "qty": "1 L", "price": "32.8"}, {"id": 11, "name": "TPAOH, 40%, 500g (17456-36)", "requestor": "Shilpa", "date": "2023-02-03", "status": "received", "vendor": "Alfa Aesar", "cas": "", "link": "https://www.alfa.com/en/catalog/017456/", "comment": "", "qty": "1.0", "price": "738"}, {"id": 12, "name": "250mL", "requestor": "Debasmita", "date": "2023-02-03", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/mm/821083", "comment": "", "qty": "1.0", "price": "105"}, {"id": 13, "name": "2,5-Dimethylfuran, 98+%", "requestor": "Jaeyul", "date": "2023-03-10", "status": "received", "vendor": "Fisher Scientific", "cas": "", "link": "https://www.thermofisher.com/order/catalog/product/A12833.22?SID=srch-srp-A12833.22", "comment": "", "qty": "2.0", "price": "129"}, {"id": 14, "name": "Tetramethylammonium acetate, 90%", "requestor": "Debasmita", "date": "2023-03-17", "status": "received", "vendor": "Alfa Aesar", "cas": "", "link": "https://www.alfa.com/en/catalog/H27659/", "comment": "", "qty": "25 g", "price": "147"}, {"id": 15, "name": "Tetrabutylphosphonium bromide", "requestor": "Fiji", "date": "2023-04-07", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/189138", "comment": "", "qty": "100 g", "price": "117"}, {"id": 16, "name": "NaOH", "requestor": "Jaeyul", "date": "2023-04-14", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "1kg", "price": "115"}, {"id": 17, "name": "TEAOH, please buy 2 bottles", "requestor": "Jaeyul", "date": "2023-04-14", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "2x500ml", "price": "214"}, {"id": 18, "name": "n-heptane, A19894.0F", "requestor": "Jaeyul", "date": "2023-06-16", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "1x2500ml", "price": "119"}, {"id": 19, "name": "Aluminum-tri-sec-butoxide", "requestor": "Hanchang", "date": "2023-06-16", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "1 x 500g", "price": "92.9"}, {"id": 20, "name": "2-Butanol", "requestor": "Hanchang", "date": "2023-07-22", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/b85919", "comment": "", "qty": "1 x 4L", "price": "187"}, {"id": 21, "name": "Silicon dioxide (acid purified)", "requestor": "Hanchang", "date": "2023-07-22", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/84880", "comment": "", "qty": "1 x 1kg", "price": "151"}, {"id": 22, "name": "258148-2.5L", "requestor": "Hanchang", "date": "2023-08-25", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/258148", "comment": "", "qty": "2.5 L * 1ea", "price": "1"}, {"id": 23, "name": "420840-1L", "requestor": "Fiji - Ludox AS40", "date": "2023-09-01", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/420840?gclid=Cj0KCQjwi7GnBhDXARIsAFLvH4nWnh0JN455qAhgKvq01TgSGV-ypboSYBj0a2D0OA-VP__2zahAv_gaAnJ_EALw_wcB", "comment": "", "qty": "1 L * 1ea", "price": "61"}, {"id": 24, "name": "20618, volume 200 cc, 1/4 in. fitting", "requestor": "Hanchang", "date": "2023-09-01", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/supelco/20618", "comment": "", "qty": "1ea", "price": "169"}, {"id": 25, "name": "20298, volume ~460 cc", "requestor": "Hanchang", "date": "2023-09-01", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/supelco/20298", "comment": "", "qty": "1ea", "price": "118"}, {"id": 26, "name": "50 cSt, 5.0L/5.0kg", "requestor": "Hanchang", "date": "2023-09-08", "status": "received", "vendor": "Other", "cas": "", "link": "https://www.col-int.com/products/silicone-oil-for-heating-bath-and-circulator?variant=39077843435671", "comment": "", "qty": "1.0", "price": "125"}, {"id": 27, "name": "S9378-500G", "requestor": "Hanchang", "date": "2023-09-08", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigma/s9378", "comment": "", "qty": "1.0", "price": "70.3"}, {"id": 28, "name": "Strontium nitrate", "requestor": "Hanchang", "date": "2023-09-22", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/243426", "comment": "", "qty": "1.0", "price": "62.1"}, {"id": 29, "name": "Magnesium nitrate hexahydrate", "requestor": "Hanchang", "date": "2023-09-22", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/237175", "comment": "", "qty": "1.0", "price": "46.2"}, {"id": 30, "name": "Zinc fluorid", "requestor": "Hanchang", "date": "2023-09-22", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/205567", "comment": "", "qty": "1.0", "price": "95.8"}, {"id": 31, "name": "Dopamine hydrochloride, H8502-25G", "requestor": "Hanchang", "date": "2023-10-06", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigma/h8502", "comment": "", "qty": "1.0", "price": "109"}, {"id": 32, "name": "CAB-O-SIL™ M-5, 150g", "requestor": "Jaeyul", "date": "2023-10-13", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "1.0", "price": "153.2"}, {"id": 33, "name": "CAS RN: 143-19-1 | Product Number: O0057\nSodium Oleate ( 25G)", "requestor": "Jugal", "date": "2023-10-20", "status": "received", "vendor": "TCI Chemicals", "cas": "", "link": "https://www.tcichemicals.com/MX/en/p/O0057", "comment": "", "qty": "1.0", "price": "44"}, {"id": 34, "name": "M50850-100G", "requestor": "Jugal", "date": "2023-10-31", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/m50850", "comment": "", "qty": "1.0", "price": "62"}, {"id": 35, "name": "CBV 2314", "requestor": "Jugal", "date": "2024-01-03", "status": "received", "vendor": "Other", "cas": "", "link": "https://www.zeolyst.com/our-products/standard-zeolite-powders/zsm-5.html", "comment": "", "qty": "0.5 Kg", "price": "15"}, {"id": 36, "name": "n-heptane, A19894.0F", "requestor": "Jaeyul", "date": "2024-02-12", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "1x2500ml", "price": "125"}, {"id": 37, "name": "234745-500G", "requestor": "Hanchang", "date": "2024-02-15", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/234745", "comment": "", "qty": "1.0", "price": "83.97"}, {"id": 38, "name": "P7703-1kg", "requestor": "Hanchang", "date": "2024-03-20", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/p7703", "comment": "", "qty": "3.0", "price": "93.1"}, {"id": 39, "name": "227986-1kg", "requestor": "Hanchang", "date": "2024-03-29", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/227986", "comment": "", "qty": "1.0", "price": "174.17"}, {"id": 40, "name": "Alfa A16037", "requestor": "Fiji", "date": "2024-04-15", "status": "received", "vendor": "Alfa Aesar", "cas": "", "link": "https://www.alfa.com/en/catalog/A16037/", "comment": "", "qty": "2 (500 g)", "price": "29.4"}, {"id": 41, "name": "CAS Number: 919-30-2", "requestor": "Debasmita", "date": "2024-05-08", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/440140", "comment": "", "qty": "1(100 ml)", "price": "1"}, {"id": 42, "name": "420794-1L", "requestor": "Debasmita", "date": "2024-11-15", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/420794", "comment": "", "qty": "1.0", "price": "60.5"}, {"id": 43, "name": "WHA68252517", "requestor": "Debasmita", "date": "2024-11-15", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/wha68252517", "comment": "", "qty": "1.0", "price": "257"}, {"id": 44, "name": "420840-1L", "requestor": "Debasmita", "date": "2024-11-15", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/420840", "comment": "", "qty": "1.0", "price": "65.5"}, {"id": 45, "name": "22491-10EA", "requestor": "Hanchang", "date": "2024-11-15", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/supelco/22491?utm_source=google%2Cgoogle&utm_medium=organicshopping%2Ccpc&utm_campaign=20790375250&utm_content=154400301983&gclid=Cj0KCQiA_9u5BhCUARIsABbMSPu907kBKRKcM2fCM--l8vNZm4OVRY4zl6vZJyAV4TEVZEgpg0lFk0oaApaIEALw_wcB", "comment": "", "qty": "1.0", "price": "80.8"}, {"id": 46, "name": "U5128-1KG", "requestor": "Hanchang", "date": "2024-11-15", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sial/u5128", "comment": "", "qty": "1.0", "price": "80.1"}, {"id": 47, "name": "T1418-10EA", "requestor": "Hanchang", "date": "2024-11-15", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigma/t1418", "comment": "", "qty": "1.0", "price": "188"}, {"id": 48, "name": "92560-10G", "requestor": "Hanchang", "date": "2024-11-15", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigma/92560", "comment": "", "qty": "1.0", "price": "115"}, {"id": 49, "name": "292834-25G", "requestor": "Hanchang", "date": "2024-11-15", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/292834", "comment": "", "qty": "1.0", "price": "41.5"}, {"id": 50, "name": "B18200-25G", "requestor": "Hanchang", "date": "2024-11-15", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/b18200", "comment": "", "qty": "1.0", "price": "58"}, {"id": 51, "name": "185922-100ML", "requestor": "Jaeyul", "date": "2025-01-13", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "1.0", "price": "43.4"}, {"id": 52, "name": "11138-49-1- 2.5 kg", "requestor": "Debasmita", "date": "2025-02-07", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/specification-sheet/SIAL/13404", "comment": "", "qty": "1.0", "price": "135"}, {"id": 53, "name": "420840-1L", "requestor": "Fiji", "date": "2025-02-10", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "1.0", "price": "65.5"}, {"id": 54, "name": "443778-500ML", "requestor": "Judith", "date": "2025-02-14", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/substance/nmp9913872504", "comment": "", "qty": "1.0", "price": "101"}, {"id": 55, "name": "8421960025 - 25 mL", "requestor": "Judith", "date": "2025-02-14", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/mm/842196", "comment": "", "qty": "1.0", "price": "73.8"}, {"id": 56, "name": "402788-100ML", "requestor": "Jaeyul", "date": "2025-04-08", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "1.0", "price": "73.6"}, {"id": 57, "name": "538124-250ML", "requestor": "Jaeyul", "date": "2025-04-08", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "1.0", "price": "105"}, {"id": 58, "name": "939315-100G", "requestor": "Jaeyul", "date": "2025-04-08", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "1.0", "price": "105"}, {"id": 59, "name": "04283-250G", "requestor": "Jaeyul", "date": "2025-04-08", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "1.0", "price": "42.4"}, {"id": 60, "name": "240532-100ML", "requestor": "Jaeyul", "date": "2025-04-08", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "1.0", "price": "35.3"}, {"id": 61, "name": "50 ea", "requestor": "Debasmita", "date": "2025-04-23", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/wha67872520", "comment": "", "qty": "1.0", "price": "264"}, {"id": 62, "name": "Sigma #283592", "requestor": "Debasmita", "date": "2025-04-23", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/283592", "comment": "", "qty": "1.0", "price": "133"}, {"id": 63, "name": "500gm", "requestor": "Debasmita", "date": "2025-04-23", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/383058", "comment": "", "qty": "1.0", "price": "105"}, {"id": 64, "name": "368458-500g", "requestor": "Hanchang", "date": "2025-04-24", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/368458", "comment": "", "qty": "1.0", "price": "42.61"}, {"id": 65, "name": "11044-1kg", "requestor": "Hanchang", "date": "2025-04-24", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/11044", "comment": "", "qty": "1.0", "price": "126"}, {"id": 66, "name": "G7757-1L", "requestor": "Hanchang", "date": "2025-04-24", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/g7757", "comment": "", "qty": "1.0", "price": "72"}, {"id": 67, "name": "Sigma #20618", "requestor": "Hanchang", "date": "2025-04-24", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/supelco/20618", "comment": "", "qty": "2.0", "price": "181"}, {"id": 68, "name": "100 ml", "requestor": "Debasmita", "date": "2025-04-24", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/435694", "comment": "", "qty": "1.0", "price": "107"}, {"id": 69, "name": "259770050 5ml", "requestor": "Jaeyul", "date": "2025-05-13", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "1.0", "price": "22.65"}, {"id": 70, "name": "447231000 100ml", "requestor": "Jaeyul", "date": "2025-05-13", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "1.0", "price": "48.65"}, {"id": 71, "name": "238597-500g", "requestor": "Hanchang", "date": "2025-05-22", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/238597", "comment": "", "qty": "1.0", "price": "84.4"}, {"id": 72, "name": "A4915-500G", "requestor": "Hanchang", "date": "2025-06-03", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/a4915", "comment": "", "qty": "1.0", "price": "80.2"}, {"id": 73, "name": "420840-1L", "requestor": "Sumit", "date": "2025-06-03", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/420840", "comment": "", "qty": "1.0", "price": "65.5"}, {"id": 74, "name": "A14470.36", "requestor": "Hanchang", "date": "2025-06-03", "status": "received", "vendor": "Fisher Scientific", "cas": "", "link": "https://www.thermofisher.com/order/catalog/product/A14470.36", "comment": "", "qty": "1.0", "price": "48.65"}, {"id": 75, "name": "940232-50G", "requestor": "Jugal", "date": "2025-06-23", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/940232?srsltid=AfmBOorOhYfl7CjMbkuNF3ko4Ngj0_4e77lVpT8rAxx418i2iY9zfxLj", "comment": "", "qty": "1.0", "price": "86"}, {"id": 76, "name": "S5881-500G", "requestor": "Jugal", "date": "2025-06-23", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/search/sodium-hydroxide?focus=products&page=1&perpage=30&sort=relevance&term=Sodium%20hydroxide&type=product", "comment": "", "qty": "1.0", "price": "81.4"}, {"id": 77, "name": "157740-100G", "requestor": "Jugal", "date": "2025-06-23", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/search/iron(iii)-chloride?focus=products&page=1&perpage=30&sort=relevance&term=Iron%28III%29%20chloride&type=product", "comment": "", "qty": "1.0", "price": "56.7"}, {"id": 78, "name": "Chemical", "requestor": "Jugal", "date": "2025-06-23", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "", "price": ""}, {"id": 79, "name": "420786-1L", "requestor": "Debasmita", "date": "2025-07-03", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/420786?srsltid=AfmBOor-3sz-gtvI4isVVCus0GU9GtF-YVIIIYwVxWRwtz4nJ49Mr3GI", "comment": "", "qty": "1.0", "price": "63.4"}, {"id": 80, "name": "179418-1L", "requestor": "Debasmita", "date": "2025-07-03", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/179418?utm_source=google&utm_medium=cpc&utm_campaign=22099353999&utm_content=&gad_source=1&gad_campaignid=22109359894&gbraid=0AAAAAD8kLQR_ea78xSpjtI9JM86kB2tbi&gclid=CjwKCAjwsZPDBhBWEiwADuO6y5YWZPrgLcvN-NDU3gtq4-RrcFOuoWHIZhrcESwUggTAYqe_4DplZRoCvPwQAvD_BwE", "comment": "", "qty": "1.0", "price": "88.5"}, {"id": 81, "name": "302929 500ml", "requestor": "Jaeyul", "date": "2025-08-27", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/302929", "comment": "", "qty": "2.0", "price": "23"}, {"id": 82, "name": "246034-100G", "requestor": "Judith", "date": "2025-08-27", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/246034?srsltid=AfmBOorb3V0P7h6cu89Pz1rhn6tv851I3chGBUk8chbAERDONeqecsuI", "comment": "", "qty": "1.0", "price": "135"}, {"id": 83, "name": "A14470-36 (500g)", "requestor": "Isaac", "date": "2025-09-09", "status": "received", "vendor": "Fisher Scientific", "cas": "", "link": "https://www.thermofisher.com/order/catalog/product/A14470.36?SID=srch-srp-A14470.36", "comment": "", "qty": "1.0", "price": "54.65"}, {"id": 84, "name": "P73803-100ML", "requestor": "Sambita", "date": "2025-10-02", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/p73803?srsltid=AfmBOoqSCnDoiM1OlvF0nw4l-2YbxnQXmkJ5FLIGV09PsvQcbL3UqTRR", "comment": "", "qty": "1.0", "price": "59.8"}, {"id": 85, "name": "281778-100ML", "requestor": "Debasmita", "date": "2025-10-13", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/281778?srsltid=AfmBOorwCsWjKqOziNyJYp-vPd0mWvGMHSbYtIzsWcrMqk9viA60TZ7K", "comment": "", "qty": "1.0", "price": "1"}, {"id": 86, "name": "482595-250 ml", "requestor": "Debasmita", "date": "2025-11-23", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/482595?utm_source=google&utm_medium=cpc&utm_campaign=23287427650&utm_content=&gad_source=1&gad_campaignid=23278168203&gbraid=0AAAAAD8kLQSynKrkA8CbA8QuXLItEeyTF&gclid=CjwKCAiA_orJBhBNEiwABkdmjGpS1KxzH3kGhkIfHx_ewOQTMgUVIca09jATSDeFTVUmZx83ca2mwhoChsAQAvD_BwE", "comment": "", "qty": "1.0", "price": "165"}, {"id": 87, "name": "Sigma #814068", "requestor": "Sambita", "date": "2025-12-08", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/mm/814068?srsltid=AfmBOoqwUybzbQUAUPj4GNZYQ72bypDw7meKVlRy_NyC9uQZi3xxQA6C", "comment": "", "qty": "1.0", "price": "419"}, {"id": 88, "name": "420832-1L", "requestor": "Fiji", "date": "2026-01-06", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/420832?srsltid=AfmBOop0pg1mbFcERN5fM63HDXloGOgbnWLhjZ-Y5Oqsws5xvNzx1ohm", "comment": "", "qty": "2.0", "price": "57.9"}, {"id": 89, "name": "D93856-100 ml", "requestor": "Debasmita", "date": "2026-01-16", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sial/d93856?srsltid=AfmBOorlZp5o9oO6hLtg9CEbs0TW9sxOGQdoP0adflR1D8N2lk7fHZsj", "comment": "", "qty": "2.0", "price": "49.5"}, {"id": 90, "name": "281778-100ML", "requestor": "Debasmita", "date": "2026-02-05", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/281778?srsltid=AfmBOorwCsWjKqOziNyJYp-vPd0mWvGMHSbYtIzsWcrMqk9viA60TZ7K", "comment": "YJ requested\n(3/17/26)", "qty": "2.0", "price": "1"}, {"id": 91, "name": "338443-1L", "requestor": "Debasmita", "date": "2026-02-05", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/338443?srsltid=AfmBOopmitRw1h3nyzP9G7zZEvdlD9FFkNNTVrXAVD-lXACR1o6q8xXT", "comment": "YJ requested\n(3/17/26)", "qty": "1.0", "price": "61.8"}, {"id": 92, "name": "05002-1L", "requestor": "Sambita", "date": "2026-02-09", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/05002", "comment": "YJ requested\n(3/4/26)", "qty": "1.0", "price": "70.2"}, {"id": 93, "name": "326135-10G", "requestor": "Sambita", "date": "2026-02-09", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/326135", "comment": "YJ requested\n(3/4/26)", "qty": "1.0", "price": "83.5"}, {"id": 94, "name": "228737-500G", "requestor": "Mobin", "date": "2026-02-24", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/substance/zincnitratehexahydrate2974910196186", "comment": "YJ requested\n(2/26/26)", "qty": "1.0", "price": "83.3"}, {"id": 95, "name": "Sigma #22491", "requestor": "Hanchang", "date": "2026-03-02", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/supelco/22491?utm_source=google&utm_medium=cpc&utm_campaign=20790375250&utm_content=154400301983&gad_source=1&gad_campaignid=20790375250&gbraid=0AAAAAD8kLQR-PezO0zjbPrgfXxBjsNMaE&gclid=CjwKCAiAh5XNBhAAEiwA_Bu8FfeUevRJsH2SZmNUWHBBZ3K8fnphKMBBUT_mtpUrldejSEJU_G_TGRoCsqcQAvD_BwE", "comment": "YJ requested\n(3/3/26)", "qty": "1.0", "price": "86.8"}, {"id": 96, "name": "302929-500ML", "requestor": "Sambita", "date": "2026-03-02", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/302929?srsltid=AfmBOoozyDl-IMBmcDRrM5iqZpFuRJ7KTNk6gu3HNLFFvDQBPbQo_8ai", "comment": "YJ requested\n(3/3/26)", "qty": "1.0", "price": "245"}, {"id": 97, "name": "239259-500G", "requestor": "Isaac", "date": "2026-04-02", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "YJ requested\n(4/3/26)", "qty": "1.0", "price": "191"}, {"id": 98, "name": "Sigma #281778", "requestor": "Debasmita", "date": "2026-04-03", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/281778?srsltid=AfmBOorwCsWjKqOziNyJYp-vPd0mWvGMHSbYtIzsWcrMqk9viA60TZ7K", "comment": "YJ requested\n(4/3/26)", "qty": "2.0", "price": "1"}, {"id": 99, "name": "Sigma #338443", "requestor": "Debasmita", "date": "2026-04-03", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/338443?srsltid=AfmBOopmitRw1h3nyzP9G7zZEvdlD9FFkNNTVrXAVD-lXACR1o6q8xXT", "comment": "YJ requested\n(4/3/26)", "qty": "1.0", "price": "61.8"}, {"id": 100, "name": "COMH9B9AF434-100G", "requestor": "Judith", "date": "2026-04-03", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/combiblocksinc/comh9b9af434?context=bbe", "comment": "YJ requested\n(4/3/26)", "qty": "1.0", "price": "81.9"}, {"id": 101, "name": "342327-5G", "requestor": "Judith", "date": "2026-04-03", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/342327", "comment": "YJ requested\n(4/3/26)", "qty": "1.0", "price": "103"}, {"id": 102, "name": "Sigma #112403", "requestor": "Judith", "date": "2026-04-03", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/mm/112403", "comment": "YJ requested\n(4/14/26)", "qty": "1.0", "price": "187.5"}, {"id": 103, "name": "OM-SFNY25XB", "requestor": "Judith", "date": "2026-04-03", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/omicron/omsfny25xb", "comment": "", "qty": "1.0", "price": "84"}, {"id": 104, "name": "238597-500G", "requestor": "Hanchang", "date": "2026-04-17", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/238597", "comment": "YJ requested\n(4/23/26)", "qty": "2.0", "price": "88.9"}, {"id": 105, "name": "11044-1KG", "requestor": "Hanchang", "date": "2026-04-17", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/11044", "comment": "YJ requested\n(4/23/26)", "qty": "1.0", "price": "113.05"}, {"id": 106, "name": "239259-100G", "requestor": "Hanchang", "date": "2026-04-17", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/239259", "comment": "Ordered \n(4/3/26)", "qty": "1.0", "price": "77.5"}, {"id": 107, "name": "Chemical", "requestor": "YoonGyeong Jeong", "date": "2026-04-17", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "", "price": ""}, {"id": 108, "name": "Sigma #131903", "requestor": "Mobin", "date": "2026-04-21", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/131903", "comment": "YJ requested\n(4/23/26)", "qty": "1.0", "price": "75.4"}, {"id": 109, "name": "409014-1L", "requestor": "Sumit", "date": "2026-04-22", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "YJ requested\n(4/23/26)", "qty": "1.0", "price": "70.7"}, {"id": 110, "name": "Chemical", "requestor": "Order Date: May 7th", "date": "2026-04-22", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "", "price": ""}, {"id": 111, "name": "BAF424002221", "requestor": "Debasmita", "date": "2026-04-28", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/baf424002221?srsltid=AfmBOooJ5Ry9y2l2QLddej-TXOG4lgFwgsbMWB3gQngPXQzSgESTIGoL", "comment": "YJ requested\n(5/11/26)", "qty": "1.0", "price": "586"}, {"id": 112, "name": "483702, CAS Number:\n1310-53-8", "requestor": "Debasmita", "date": "2026-04-28", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/483702?srsltid=AfmBOooOGLk1WYpmEE9f5a63ZE1ti8KIhZtasYK0NmLlFTNmjpfsSrd3", "comment": "YJ requested\n(5/11/26)", "qty": "1.0", "price": "104"}, {"id": 113, "name": "100g", "requestor": "Bartu", "date": "2026-04-30", "status": "received", "vendor": "Other", "cas": "", "link": "https://www.fishersci.com/shop/products/strontium-hydroxide-octahydrate-99-metals-basis-thermo-scientific/AA4135122", "comment": "", "qty": "1.0", "price": "73.3"}, {"id": 114, "name": "250 mg", "requestor": "Fiji", "date": "2026-05-06", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aablocksinc/aabh97d2f1fa?context=bbe&srsltid=AfmBOoooC2B7wYmLByL8k47Ag0443-SgW2g_P8tA4U3CAxaOYTmolY8B", "comment": "YJ requested\n(5/11/26)", "qty": "1.0", "price": "109.2"}, {"id": 115, "name": "25 g", "requestor": "Mobin", "date": "2026-05-06", "status": "received", "vendor": "VWR", "cas": "", "link": "https://www.vwr.com/us/en/product/NA2113468/indiumiii-nitrate-hydrate-99999-metals-basis-puratronic", "comment": "", "qty": "1.0", "price": "210.27"}, {"id": 116, "name": "Pack of 1", "requestor": "Debasmita", "date": "2026-05-07", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/wha1093111?srsltid=AfmBOop_ROpwsQDBwy1D7H99X4j3MZP0rkwj8bYjh9ZmE_LzYSoUG-tE", "comment": "YJ requested\n(5/11/26)", "qty": "1.0", "price": "189"}, {"id": 117, "name": "500 g", "requestor": "Judith", "date": "2026-05-07", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/supelco/10343u?utm_source=google&utm_medium=cpc&utm_campaign=20790375250&utm_content=154400301983&gad_source=1&gad_campaignid=20790375250&gclid=Cj0KCQjw8PDPBhCeARIsAOJwmWXiog_bLitx2g7cSz3LTRmlwDc222RzAyolPLFy64AVblfPW-INOxEaAtcmEALw_wcB", "comment": "YJ requested\n(5/11/26)", "qty": "1.0", "price": "133"}, {"id": 118, "name": "Chemical", "requestor": "Order Date: May 21st", "date": "2026-05-07", "status": "received", "vendor": "", "cas": "", "link": "", "comment": "", "qty": "", "price": ""}, {"id": 119, "name": "Sigma #bl3h97a45e39", "requestor": "Judith", "date": "2026-05-12", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/bldpharmatech/bl3h97a45e39?context=bbe", "comment": "", "qty": "1.0", "price": "8"}, {"id": 120, "name": "500 g", "requestor": "YoonGyeong", "date": "2026-05-17", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/368458", "comment": "", "qty": "1.0", "price": "42.64"}, {"id": 121, "name": "Sigma #synf100001", "requestor": "Hanchang", "date": "2026-05-20", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/synf100001?utm_source=google&utm_medium=cpc&utm_campaign=23331190685&utm_content=194830326172&gad_source=1&gad_campaignid=23331190685&gbraid=0AAAAAD8kLQR2n9_JxoOJ_47FodM0ua3Yf&gclid=CjwKCAjwt7XQBhBkEiwAtStpp8v457ShPU_ZBbVPBfhNZX1xpr506_q8tMnWha_hAFKiS9B8uNV8KBoCkV8QAvD_BwE", "comment": "", "qty": "2.0", "price": "63.8"}, {"id": 122, "name": "Sigma #bmsp7700t5m", "requestor": "YoonGyeong", "date": "2026-05-20", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/bmsp7700t5m?utm_source=google&utm_medium=cpc&utm_campaign=23331190685&utm_content=194830326172&gad_source=1&gad_campaignid=23331190685&gbraid=0AAAAAD8kLQR2n9_JxoOJ_47FodM0ua3Yf&gclid=CjwKCAjwt7XQBhBkEiwAtStpp-zkWA412Y5y5hUD9ncLjgWk0gLUvFobkAkujMM3zYUmuuZ6zx4qzRoCETIQAvD_BwE", "comment": "", "qty": "1.0", "price": "27.8"}, {"id": 123, "name": "Sigma #wha1005055", "requestor": "Hanchang", "date": "2026-05-20", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/aldrich/wha1005055", "comment": "", "qty": "2.0", "price": "16.4"}, {"id": 124, "name": "500 g", "requestor": "Hanchang", "date": "2026-05-20", "status": "received", "vendor": "Sigma-Aldrich", "cas": "", "link": "https://www.sigmaaldrich.com/US/en/product/sigald/221295", "comment": "", "qty": "1.0", "price": "104"}];
+const PW = "7777";
+
+let newOrders = JSON.parse(localStorage.getItem('uh_new_orders') || JSON.stringify([
+  {id:2001, name:"Sigma #bl3h97a45e39", requestor:"Judith", date:"2026-05-12", status:"new", vendor:"Sigma-Aldrich", cas:"5 g", link:"https://www.sigmaaldrich.com/US/en/product/bldpharmatech/bl3h97a45e39?context=bbe", comment:"", urgent:"no", delivery:"", qty:"1", price:"80"},
+  {id:2002, name:"Sigma #368458", requestor:"YoonGyeong", date:"2026-05-17", status:"new", vendor:"Sigma-Aldrich", cas:"500 g", link:"https://www.sigmaaldrich.com/US/en/product/sigald/368458", comment:"", urgent:"no", delivery:"", qty:"1", price:"42.64"},
+  {id:2003, name:"Sigma #synf100001", requestor:"Hanchang", date:"2026-05-20", status:"new", vendor:"Sigma-Aldrich", cas:"", link:"https://www.sigmaaldrich.com/US/en/product/aldrich/synf100001", comment:"", urgent:"no", delivery:"", qty:"2", price:"63.8"},
+  {id:2004, name:"Sigma #bmsp7700t5m", requestor:"YoonGyeong", date:"2026-05-20", status:"new", vendor:"Sigma-Aldrich", cas:"", link:"https://www.sigmaaldrich.com/US/en/product/aldrich/bmsp7700t5m", comment:"", urgent:"no", delivery:"", qty:"1", price:"27.8"},
+  {id:2005, name:"Sigma #wha1005055", requestor:"Hanchang", date:"2026-05-20", status:"new", vendor:"Sigma-Aldrich", cas:"", link:"https://www.sigmaaldrich.com/US/en/product/aldrich/wha1005055", comment:"", urgent:"no", delivery:"", qty:"2", price:"16.4"},
+  {id:2006, name:"Sigma #221295", requestor:"Hanchang", date:"2026-05-20", status:"new", vendor:"Sigma-Aldrich", cas:"500 g", link:"https://www.sigmaaldrich.com/US/en/product/sigald/221295", comment:"", urgent:"no", delivery:"", qty:"1", price:"104"}
+]));
+let isAdmin = false;
+let currentTab = '';
+let currentView = 'requests';
+let editId = null;
+
+function allOrders() { return [...newOrders]; }
+function histOrders() { return HIST; }
+
+function persist() { localStorage.setItem('uh_new_orders', JSON.stringify(newOrders)); }
+function ini(n) { return (n||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+
+function badge(s) {
+  const m={new:'b-new New',requested:'b-requested Requested',ordered:'b-ordered Ordered',received:'b-received Received'};
+  const [c,l]=(m[s]||'b-new New').split(' ');
+  return `<span class="badge ${c}">${l}</span>`;
+}
+
+function onAdminToggle() {
+  if (document.getElementById('adminToggle').checked) {
+    document.getElementById('adminToggle').checked = false;
+    document.getElementById('pwInput').value = '';
+    document.getElementById('pwErr').textContent = '';
+    document.getElementById('pwModal').classList.add('open');
+    setTimeout(()=>document.getElementById('pwInput').focus(), 100);
+  } else {
+    isAdmin = false;
+    document.getElementById('adminLbl').textContent = 'Member';
+    render();
+  }
+}
+
+function checkPw() {
+  if (document.getElementById('pwInput').value === PW) {
+    isAdmin = true;
+    document.getElementById('adminToggle').checked = true;
+    document.getElementById('adminLbl').textContent = 'Admin';
+    document.getElementById('pwModal').classList.remove('open');
+    toast('Admin mode on ✓');
+    render();
+  } else {
+    document.getElementById('pwErr').textContent = 'Wrong password';
+    document.getElementById('pwInput').value = '';
+  }
+}
+
+function cancelAdmin() {
+  document.getElementById('pwModal').classList.remove('open');
+  document.getElementById('adminToggle').checked = false;
+}
+
+document.getElementById('pwInput').addEventListener('keydown', e => { if(e.key==='Enter') checkPw(); });
+
+function getFiltered() {
+  const q = document.getElementById('srch').value.toLowerCase();
+  const req = document.getElementById('fReq').value;
+  const ven = document.getElementById('fVen').value;
+  return allOrders().filter(o => {
+    const mQ = !q || o.name.toLowerCase().includes(q) || (o.requestor||'').toLowerCase().includes(q);
+    const mT = !currentTab || o.status === currentTab;
+    const mR = !req || o.requestor === req;
+    const mV = !ven || o.vendor === ven;
+    return mQ && mT && mR && mV;
+  });
+}
+
+function render() {
+  updateCounts(); updateDropdowns(); updateVendorSidebar();
+  if (currentView === 'history') { renderHistory(); return; }
+  const filtered = getFiltered();
+  const tbody = document.getElementById('tbody');
+  if (filtered.length === 0) {
+    document.getElementById('emptyState').classList.add('show');
+    document.getElementById('tableWrap').style.display = 'none';
+  } else {
+    document.getElementById('emptyState').classList.remove('show');
+    document.getElementById('tableWrap').style.display = 'block';
+    tbody.innerHTML = filtered.map(o => `
+      <tr>
+        <td title="${o.name}"><div class="iname">${o.urgent==='yes'?'🚨 ':''}${o.name}</div>${o.cas?`<div class="isub">CAS ${o.cas}</div>`:''}</td>
+        <td><div class="rc"><div class="av">${ini(o.requestor)}</div>${o.requestor||'—'}</div></td>
+        <td>${o.vendor?`<span class="vtag">${o.vendor}</span>`:'<span style="color:var(--g400)">—</span>'}</td>
+        <td style="color:var(--g400);font-size:11px">${o.date}</td>
+        <td style="font-size:11px;color:var(--g600)">${o.qty||'—'}</td>
+        <td style="font-size:11px;color:var(--g600)">${o.price?'$'+o.price:'—'}</td>
+        <td>${isAdmin
+          ? `<select class="status-sel" onchange="changeStatus(${o.id},this.value)">
+              <option value="new"${o.status==='new'?' selected':''}>New</option>
+              <option value="requested"${o.status==='requested'?' selected':''}>Requested</option>
+              <option value="ordered"${o.status==='ordered'?' selected':''}>Ordered</option>
+              <option value="received"${o.status==='received'?' selected':''}>Received</option>
+             </select>`
+          : badge(o.status)}</td>
+        <td title="${o.comment||''}" style="font-size:11px;color:var(--g600)">${o.comment||'—'}</td>
+        <td>${o.link?`<a class="lbtn" href="${o.link}" target="_blank">View ↗</a>`:'<span style="color:var(--g400)">—</span>'}</td>
+        <td><div class="arow">
+          ${isAdmin?`<button class="abtn" onclick="openModal(${o.id})">Edit</button>`:''}
+          ${isAdmin?`<button class="abtn danger" onclick="del(${o.id})">Del</button>`:''}
+        </div></td>
+      </tr>`).join('');
+  }
+}
+
+function renderHistory() {
+  const q = document.getElementById('histSrch').value.toLowerCase();
+  const req = document.getElementById('histReq').value;
+  const showAll = document.getElementById('histShowAll').checked;
+  const members = [...new Set(HIST.map(o=>o.requestor).filter(Boolean))].sort();
+  const sel = document.getElementById('histReq');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All members</option>' + members.map(n=>`<option value="${n}"${n===cur?' selected':''}>${n}</option>`).join('');
+
+  const threeMonthsAgo = new Date();
+  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+  const filtered = HIST.filter(o => {
+    const mQ = !q || o.name.toLowerCase().includes(q) || (o.requestor||'').toLowerCase().includes(q);
+    const mR = !req || o.requestor === req;
+    const mDate = showAll || !o.date || new Date(o.date) >= threeMonthsAgo;
+    return mQ && mR && mDate;
+  });
+
+  document.getElementById('histCount').textContent = `${filtered.length} orders`;
+  document.getElementById('histEmpty').style.display = filtered.length ? 'none' : 'block';
+  document.getElementById('histBody').innerHTML = filtered.map(o => `
+    <tr>
+      <td title="${o.name}"><div class="iname">${o.name}</div>${o.cas?`<div class="isub">${o.cas}</div>`:''}</td>
+      <td><div class="rc"><div class="av">${ini(o.requestor)}</div>${o.requestor||'—'}</div></td>
+      <td>${o.vendor?`<span class="vtag">${o.vendor}</span>`:'—'}</td>
+      <td style="font-size:11px;color:var(--g400)">${o.date}</td>
+      <td style="font-size:11px;color:var(--g600)">${o.qty||'—'}</td>
+      <td style="font-size:11px;color:var(--g600)">${o.price?'$'+o.price:'—'}</td>
+      <td style="font-size:11px;color:var(--g600)" title="${o.comment||''}">${o.comment||'—'}</td>
+      <td>${o.link?`<a class="lbtn" href="${o.link}" target="_blank">View ↗</a>`:'—'}</td>
+      <td>${isAdmin?`<button class="abtn danger" onclick="delHist(${o.id})">Del</button>`:''}</td>
+    </tr>`).join('');
+}
+
+function changeStatus(id, val) {
+  if (!isAdmin) return;
+  const o = newOrders.find(x=>x.id===id);
+  if (o) { o.status = val; persist(); render(); toast('Status updated ✓'); }
+}
+
+function updateCounts() {
+  const c={new:0,requested:0,ordered:0,received:0};
+  allOrders().forEach(o=>{if(c[o.status]!==undefined)c[o.status]++;});
+  const tot = allOrders().length;
+  ['new','requested','ordered','received'].forEach(s=>{
+    const ce=document.getElementById('cnt-'+s); if(ce)ce.textContent=c[s];
+    const te=document.getElementById('tab-'+s); if(te)te.textContent=c[s];
+  });
+  ['all'].forEach(s=>{
+    const ce=document.getElementById('cnt-'+s); if(ce)ce.textContent=tot;
+    const te=document.getElementById('tab-'+s); if(te)te.textContent=tot;
+  });
+}
+
+function updateDropdowns() {
+  const rSel=document.getElementById('fReq'), rCur=rSel.value;
+  const names=[...new Set(allOrders().map(o=>o.requestor).filter(Boolean))].sort();
+  rSel.innerHTML='<option value="">All members</option>'+names.map(n=>`<option value="${n}"${n===rCur?' selected':''}>${n}</option>`).join('');
+  const vSel=document.getElementById('fVen'), vCur=vSel.value;
+  const vendors=[...new Set(allOrders().map(o=>o.vendor).filter(Boolean))].sort();
+  vSel.innerHTML='<option value="">All vendors</option>'+vendors.map(v=>`<option value="${v}"${v===vCur?' selected':''}>${v}</option>`).join('');
+}
+
+function updateVendorSidebar() {
+  const el=document.getElementById('vendorList'); if(!el) return;
+  const vendors=[...new Set(allOrders().map(o=>o.vendor).filter(Boolean))].sort();
+  el.innerHTML=vendors.map(v=>`<div class="sb-item" onclick="document.getElementById('fVen').value='${v}';render()">${v} <span>${allOrders().filter(o=>o.vendor===v).length}</span></div>`).join('');
+}
+
+function setTab(status, el) {
+  currentTab = status;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.sb-item[onclick^="setTab"]').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  render();
+}
+
+function switchView(view, btn) {
+  currentView = view;
+  document.querySelectorAll('.vbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tabBar').style.display = view==='requests'?'flex':'none';
+  document.getElementById('topBar').style.display = view==='requests'?'flex':'none';
+  document.getElementById('emptyState').classList.remove('show');
+  document.getElementById('tableWrap').style.display = 'none';
+  document.getElementById('histView').style.display = view==='history'?'block':'none';
+  render();
+}
+
+function openModal(id) {
+  editId = id || null;
+  document.getElementById('modalTitle').textContent = id ? 'Edit Request' : 'New Order Request';
+  document.getElementById('statusFg').style.display = isAdmin ? 'block' : 'none';
+  if (id) {
+    const o = newOrders.find(x=>x.id===id);
+    document.getElementById('fName').value = o.name;
+    document.getElementById('fReqName').value = o.requestor||'';
+    document.getElementById('fDate').value = o.date;
+    document.getElementById('fVendor').value = o.vendor||'';
+    document.getElementById('fStatus').value = o.status;
+    document.getElementById('fCAS').value = o.cas||'';
+    document.getElementById('fQty').value = o.qty||'';
+    document.getElementById('fPrice').value = o.price||'';
+    document.getElementById('fLink').value = o.link||'';
+    document.getElementById('fComment').value = o.comment||'';
+    document.getElementById('fUrgent').value = o.urgent||'no';
+    document.getElementById('deliveryFg').style.display = o.urgent==='yes'?'block':'none';
+    document.getElementById('fDelivery').value = o.delivery||'';  } else {
+    document.getElementById('fName').value='';
+    document.getElementById('fReqName').value='';
+    document.getElementById('fDate').value=new Date().toISOString().slice(0,10);
+    document.getElementById('fVendor').value='';
+    document.getElementById('fStatus').value='new';
+    document.getElementById('fCAS').value='';
+    document.getElementById('fQty').value='';
+    document.getElementById('fPrice').value='';
+    document.getElementById('fLink').value='';
+    document.getElementById('fComment').value='';
+    document.getElementById('fUrgent').value='no';
+    document.getElementById('deliveryFg').style.display='none';
+    document.getElementById('fDelivery').value='';
+  }
+  document.getElementById('modal').classList.add('open');
+  setTimeout(()=>document.getElementById('fName').focus(),50);
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+function saveOrder() {
+  const name=document.getElementById('fName').value.trim();
+  const req=document.getElementById('fReqName').value;
+  if(!name||!req){toast('Please fill in required fields');return;}
+  const urgent=document.getElementById('fUrgent').value;
+  const delivery=document.getElementById('fDelivery').value;
+  const o={
+    id:editId||Date.now(), name, requestor:req,
+    date:document.getElementById('fDate').value,
+    status: isAdmin ? document.getElementById('fStatus').value : 'new',
+    vendor:document.getElementById('fVendor').value,
+    cas:document.getElementById('fCAS').value.trim(),
+    link:document.getElementById('fLink').value.trim(),
+    comment:document.getElementById('fComment').value.trim(),
+    urgent, delivery,
+    qty:document.getElementById('fQty').value.trim(),
+    price:document.getElementById('fPrice').value.trim()
+  };
+  if(editId){const i=newOrders.findIndex(x=>x.id===editId);newOrders[i]=o;}
+  else{newOrders.unshift(o);}
+  persist();closeModal();render();
+  if(!editId && urgent==='yes'){
+    sendUrgentEmail(req, name, o.link, delivery, o.comment);
+  }
+  toast(editId?'Updated ✓':'Request submitted ✓');
+}
+
+function del(id) {
+  if(!isAdmin)return;
+  if(!confirm('Delete?'))return;
+  newOrders=newOrders.filter(o=>o.id!==id);
+  persist();render();toast('Deleted');
+}
+
+function delHist(id) {
+  toast('History records are read-only');
+}
+
+function toast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function exportCSV() {
+  const rows=[['Chemical','CAS','Name','Vendor','Date','Status','Comment','Link']];
+  allOrders().forEach(o=>rows.push([o.name,o.cas||'',o.requestor||'',o.vendor||'',o.date,o.status,o.comment||'',o.link||'']));
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='lab-orders.csv';a.click();toast('Exported!');
+}
+
+function importData(e) {
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{const d=JSON.parse(ev.target.result);if(Array.isArray(d)){newOrders=d;persist();render();toast('Imported!');}}
+    catch{toast('Import failed');}
+  };
+  reader.readAsText(file);
+}
+
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))closeModal();});
+document.getElementById('pwModal').addEventListener('click',e=>{if(e.target===document.getElementById('pwModal'))cancelAdmin();});
+
+emailjs.init("D35q4nWGS-fK-0Ax_");
+
+function toggleUrgent() {
+  const yes = document.getElementById('fUrgent').value === 'yes';
+  document.getElementById('deliveryFg').style.display = yes ? 'block' : 'none';
+}
+
+function sendUrgentEmail(name, chemical, link, deliveryDate, comment) {
+  emailjs.send("service_1qhvplb", "template_0tps75g", {
+    requestor: name,
+    chemical: chemical,
+    link: link || '(no link provided)',
+    delivery_date: deliveryDate,
+    comment: comment || '(none)',
+    name: name,
+  }).then(() => {
+    toast('Urgent email sent to YJ ✓');
+  }).catch(() => {
+    toast('Email failed — check EmailJS settings');
+  });
+}
+
+document.getElementById('si-all').classList.add('active');
+render();
+</script>
+</body>
+</html>
